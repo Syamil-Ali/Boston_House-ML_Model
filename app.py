@@ -1,0 +1,37 @@
+import pickle
+from flask import Flask, request, app, jsonify, url_for, render_template
+import numpy as np
+import pandas as pd
+
+app = Flask(__name__) # defining flask app
+
+## load ml model and the scaler model
+regmodel = pickle.load(open('regmodel.pkl', 'rb'))
+scalar = pickle.load(open('scaling.pkl','rb'))
+
+@app.route('/') # route homepage
+def home():
+    return render_template('home.html')
+
+
+
+#CRUD
+@app.route('/predict_api', methods = ['POST']) # route for the predict api
+def predict_api():
+    data = request.json['data']
+    print(data)
+
+    # convert to shape 1, -1
+    print(np.array(list(data.values())).reshape(1,-1))
+    data_reshape = np.array(list(data.values())).reshape(1,-1)
+
+    new_data = scalar.transform(data_reshape)
+    output = regmodel.predict(new_data)
+    print(output[0])
+
+    return jsonify(output[0])
+
+
+# Start the app
+if __name__ == "__main__":
+    app.run(debug=True)
